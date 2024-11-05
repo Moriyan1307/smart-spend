@@ -1,129 +1,97 @@
 "use client";
-import Image from "next/image";
 import HomeIcon from "@mui/icons-material/Home";
-import PersonIcon from "@mui/icons-material/Person";
-import GroupIcon from "@mui/icons-material/Group";
-import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import FolderIcon from "@mui/icons-material/Folder";
-import SettingsIcon from "@mui/icons-material/Settings";
-import PhoneIcon from "@mui/icons-material/Phone";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useSelector } from "react-redux";
+import SettingsIcon from "@mui/icons-material/Settings";
+import WalletIcon from "@mui/icons-material/Wallet";
+import SavingsIcon from "@mui/icons-material/Savings";
+import LeaderboardIcon from "@mui/icons-material/Leaderboard";
+import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import CallIcon from "@mui/icons-material/Call";
 
 const paths = [
+  { title: "Dashboard", path: "/dashboard", icon: HomeIcon },
+  { title: "Expense Tracker", path: "/expense-tracker", icon: WalletIcon },
+  { title: "Savings", path: "/savings", icon: SavingsIcon },
+  { title: "Investments", path: "/investments", icon: LeaderboardIcon },
   {
-    title: "Home",
-    path: "/",
-    icon: HomeIcon,
+    title: "Miscellaneous",
+    path: "/miscellaneous",
+    icon: MiscellaneousServicesIcon,
   },
-  {
-    title: "Profile",
-    path: "/profile",
-    icon: PersonIcon,
-  },
-  {
-    title: "Networking",
-    path: "/networking",
-    icon: GroupIcon,
-  },
-  {
-    title: "Opportunities",
-    path: "/opportunities",
-    icon: WorkOutlineIcon,
-  },
-  {
-    title: "Events",
-    path: "/events",
-    icon: CalendarMonthIcon,
-  },
-  {
-    title: "Resources ",
-    path: "/resources",
-    icon: FolderIcon,
-  },
-  {
-    title: "Settings",
-    path: "/settings",
-    icon: SettingsIcon,
-  },
-  {
-    title: "Contact Us",
-    path: "/contact",
-    icon: PhoneIcon,
-  },
+  { title: "Dues", path: "/dues", icon: ScheduleIcon },
+  { title: "Overview", path: "/overview", icon: ZoomInIcon },
+  { title: "Settings", path: "/settings", icon: SettingsIcon },
+  { title: "Contact Us", path: "/contact", icon: CallIcon },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
 
-  return (
-    <nav className="w-64 h-full bg-gray-100 p-8 border-r">
-      <div
-        className={`flex flex-col items-center ${
-          isLoggedIn ? "h-5/6" : "h-2/6"
-        } justify-between`}
+  if (isLoggedIn) {
+    return (
+      <nav
+        className="w-64 h-full p-8 border-r border-gray-800"
+        style={{
+          backgroundColor: "var(--theme-color)",
+          color: "var(--text-color)",
+        }}
       >
-        <div className="w-full h-32 flex justify-center items-center">
-          <Image src="/logo1.svg" height={200} width={150} alt="Logo 1" />
+        <div
+          className={`flex flex-col items-center ${
+            isLoggedIn ? "h-5/6" : "h-2/6"
+          } justify-between`}
+        >
+          <div className="w-full h-32 flex justify-center items-center">
+            <span
+              className="text-3xl font-extrabold"
+              style={{ color: "var(--text-color)" }}
+            >
+              SmartSpend
+            </span>
+          </div>
+
+          <div className="flex flex-col w-full space-y-4">
+            {paths.map((item) => {
+              const IconComponent = item.icon;
+              const isActive = pathname === item.path;
+              const shouldRender =
+                isLoggedIn ||
+                item.title === "Dashboard" ||
+                item.title === "Contact Us";
+
+              return shouldRender ? (
+                <Link href={item.path} key={item.title} passHref>
+                  <div
+                    className={`flex items-center p-2 h-10 w-full ${
+                      isActive
+                        ? "bg-gray-300 text-white rounded-lg"
+                        : "text-white"
+                    }`}
+                    style={{
+                      backgroundColor: isActive
+                        ? "var(--element-bg-color)"
+                        : "transparent",
+                    }}
+                  >
+                    <IconComponent
+                      sx={{
+                        fontSize: 28,
+                        color: isActive ? "white" : "var(--text-color)",
+                      }}
+                    />
+                    <p className="ml-2">{item.title}</p>
+                  </div>
+                </Link>
+              ) : null;
+            })}
+          </div>
         </div>
-
-        {paths.map((item) => {
-          const IconComponent = item.icon;
-          const isActive = pathname === item.path;
-
-          // Show only "Home" and "Contact Us" if not logged in
-          if (
-            !isLoggedIn &&
-            (item.title === "Home" || item.title === "Contact Us")
-          ) {
-            return (
-              <Link
-                href={item.path}
-                key={item.title}
-                passHref
-                className={`w-full h-10 ${
-                  isActive ? "bg-gray-300 text-black rounded-lg" : "text-black"
-                }`}
-              >
-                <div
-                  key={item.title}
-                  className="flex justify-start items-center p-2"
-                >
-                  <IconComponent sx={{ fontSize: 28 }} />
-                  <p className="ml-2">{item.title}</p>
-                </div>
-              </Link>
-            );
-          }
-
-          // Show all items if logged in
-          if (isLoggedIn) {
-            return (
-              <Link
-                href={item.path}
-                key={item.title}
-                passHref
-                className={`w-full h-10 ${
-                  isActive ? "bg-gray-300 text-black rounded-lg" : "text-black"
-                }`}
-              >
-                <div
-                  key={item.title}
-                  className="flex justify-start items-center p-2"
-                >
-                  <IconComponent sx={{ fontSize: 28 }} />
-                  <p className="ml-2">{item.title}</p>
-                </div>
-              </Link>
-            );
-          }
-
-          return null;
-        })}
-      </div>
-    </nav>
-  );
+      </nav>
+    );
+  }
 }

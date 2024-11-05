@@ -1,124 +1,104 @@
 // app/login/page.js
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setSignIn } from "../../app/redux/slices/authSlice"; // Adjust the path
 import { useRouter } from "next/navigation"; // Use for navigation in Next.js app router
+import {
+  auth,
+  provider,
+  signInWithPopup,
+  signOut,
+  getRedirectResult,
+} from "../../../firebase"; // Ensure all imports are correct
 
 export default function LoginForm() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
-  const [formErrors, setFormErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
+  const [user, setUserState] = useState(null);
   const [isInvalid, setIsInvalid] = useState(false);
 
   const dispatch = useDispatch();
-  const router = useRouter();
+  const router = useRouter(); // Add router for navigation
 
-  const handleTogglePassword = () => setShowPassword(!showPassword);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const getCurrentMonth = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Pad with '0' if needed
+    return `${year}-${month}`;
   };
 
-  const validateForm = () => {
-    let errors = {};
-    if (!formData.email) {
-      errors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Email is invalid";
-    }
-    if (!formData.password) {
-      errors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters long";
-    }
-    return errors;
-  };
+  const month = getCurrentMonth();
 
-  const handleOnSubmit = (e) => {
-    e.preventDefault();
-    const errors = validateForm();
-    if (Object.keys(errors).length === 0) {
-      // Handle predefined user credentials
-      if (
-        formData.email === "student@uta.com" &&
-        formData.password === "password"
-      ) {
-        router.push("/");
-        dispatch(setSignIn("student"));
-      } else if (
-        formData.email === "professor@uta.com" &&
-        formData.password === "password"
-      ) {
-        router.push("/");
-        dispatch(setSignIn("professor"));
-      } else if (
-        formData.email === "admin@uta.com" &&
-        formData.password === "password"
-      ) {
-        router.push("/");
-        dispatch(setSignIn("admin"));
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      console.log(user);
+      if (user) {
+        setUserState(user);
+        dispatch(
+          setSignIn({
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            month: month,
+          })
+        );
+        router.push("/dashboard"); // Redirect to the home page upon successful login
       } else {
-        setIsInvalid(true);
+        setUserState(null);
+        dispatch(setSignIn(null));
       }
-    } else {
-      setFormErrors(errors);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [dispatch, router]);
+
+  // New function to handle login
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Prevent default form submission behavior
+    try {
+      await signInWithPopup(auth, provider);
+      const userToken = firebase.auth().currentUser;
+      const idToken = await userToken.getIdToken();
+      console.log(idToken);
+    } catch (error) {
+      console.error("Error during sign-in", error);
+      setIsInvalid(true); // Show error message if sign-in fails
+    }
+  };
+
+  // New function to handle logout
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUserState(null); // Clear user state after logout
+    } catch (error) {
+      console.error("Error during sign-out", error);
     }
   };
 
   return (
     <div className="max-w-lg mx-auto p-8 border border-gray-300 rounded-md">
       <h2 className="text-2xl font-bold mb-6">Login</h2>
-      <form onSubmit={handleOnSubmit} className="space-y-4">
-        <div>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email*"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-          {formErrors.email && (
-            <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
-          )}
-        </div>
-
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            placeholder="Password*"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-          <button
-            type="button"
-            onClick={handleTogglePassword}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-          >
-            👁️
-          </button>
-          {formErrors.password && (
-            <p className="text-red-500 text-sm mt-1">{formErrors.password}</p>
-          )}
-        </div>
-
+      <form className="space-y-4" onSubmit={handleLogin}>
         <button
-          type="submit"
+          type="submit" // Change to type="submit" to trigger form submission
           className="w-full bg-black text-white px-4 py-2 rounded-md"
         >
-          Login
+          Login with Google
+        </button>
+        <button
+          type="button" // Keep as type="button" for logout
+          className="w-full bg-black text-white px-4 py-2 rounded-md"
+          onClick={handleLogout}
+        >
+          Logout
         </button>
         {isInvalid && (
-          <p className="text-red-500 mt-2">Invalid email or password</p>
+          <p className="text-red-500 mt-2">
+            Invalid login attempt. Please try again.
+          </p>
         )}
       </form>
     </div>

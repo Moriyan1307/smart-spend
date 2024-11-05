@@ -1,109 +1,78 @@
-// app/components/FeaturedProfile.js
-// import { events, profiles } from "./data";
-
+import React from "react";
+import { FaExchangeAlt, FaExternalLinkAlt } from "react-icons/fa";
 import { useSelector } from "react-redux";
 
-const profiles = [
-  {
-    name: "Florencio Dorrance",
-    title: "Project Manager",
-    image: "/profile1.jpg",
-  },
-  {
-    name: "Benny Spanbauer",
-    title: " Sales Manager",
-    image: "/profile2.jpg",
-  },
-  {
-    name: "Jamel Eusebio",
-    title: "React Dev",
-    image: "/profile3.jpg",
-  },
-  {
-    name: "Lavern Laboy",
-    title: "Backend Dev",
-    image: "/profile4.jpg",
-  },
-];
-
-const events = [
-  {
-    id: 1,
-    name: "Create An LMS Website With EduNet",
-    date: "Sept 25, 2024",
-  },
-  {
-    id: 2,
-    name: "Create An LMS Website With EduNet",
-    date: "Sept 25, 2024",
-  },
-  {
-    id: 3,
-    name: "Create An LMS Website With EduNet",
-    date: "Sept 25, 2024",
-  },
-];
-
-export default function FeaturedProfile() {
+const MonthlyOverview = () => {
   const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
 
   if (isLoggedIn) {
     return (
-      <div className="w-3/12 bg-white p-5 shadow-md h-full">
-        <div className="p-2">
-          <h2 className="text-xl font-semibold border-b pb-2 text-center">
-            Featured Profile
-          </h2>
-          <div className="mt-4">
-            {profiles.map((profile) => (
-              <div key={profile.name} className="flex items-center py-3">
-                <img
-                  src={profile.image}
-                  alt={profile.name}
-                  className="w-10 h-10 rounded-full object-cover mr-3 border-2"
-                />
-                <div>
-                  <p className="text-sm">{profile.name}</p>
-                  <p className="text-xs text-gray-500">{profile.title}</p>
-                </div>
-              </div>
-            ))}
+      <div className="bg-white text-gray-800 rounded-lg p-6 shadow-md w-4/12">
+        <h2 className="text-lg font-semibold mb-4">October Overview</h2>
+        <div className="bg-gray-100 rounded-lg p-4">
+          <div className="grid grid-cols-3 gap-4 mb-2 font-semibold">
+            <span>Categories</span>
+            <span>Spent</span>
+            <span>Left</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4 border-b border-gray-300 py-2">
+            <span>Needs</span>
+            <span>$578</span>
+            <span>$22</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4 border-b border-gray-300 py-2">
+            <span>Wants</span>
+            <span>$0</span>
+            <span>$360</span>
+          </div>
+          <div className="mt-4 text-green-600 font-semibold">
+            Total Savings: $622
           </div>
         </div>
+        <div className="mt-4 text-right text-gray-500 text-sm">7 days left</div>
 
-        <div className="p-2">
-          <h2 className="text-xl font-semibold border-b pb-2 text-center">
-            Events
-          </h2>
-          <div className="mt-4">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="flex items-center justify-between py-3"
-              >
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-100 flex items-center justify-center rounded-full mr-3">
-                    <img
-                      src="/calendar-icon.svg"
-                      alt="Event Icon"
-                      className="w-6 h-6"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-sm">{event.name}</p>
-                    <p className="text-xs text-gray-500">{event.date}</p>
-                  </div>
-                </div>
-                {/* <button className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center">
-                <span className="text-xl">+</span>
-              </button> */}
+        <div className="bg-white text-gray-800 rounded-lg p-6 shadow-md mt-6">
+          <div className="grid grid-cols-2 gap-4">
+            {/* Savings Account Card */}
+            <div className="bg-gray-100 p-4 rounded-lg shadow-sm flex justify-between items-center">
+              <div>
+                <h3 className="text-sm text-gray-500">Savings Account</h3>
+                <p className="text-2xl font-bold">$0</p>
               </div>
-            ))}
+              <FaExchangeAlt className="text-gray-400" />
+            </div>
+
+            {/* Investments Account Card */}
+            <div className="bg-gray-100 p-4 rounded-lg shadow-sm flex justify-between items-center">
+              <div>
+                <h3 className="text-sm text-gray-500">Investments Account</h3>
+                <p className="text-2xl font-bold">$0</p>
+              </div>
+              <FaExchangeAlt className="text-gray-400" />
+            </div>
+
+            {/* Miscellaneous Account Card */}
+            <div className="bg-gray-100 p-4 rounded-lg shadow-sm flex justify-between items-center">
+              <div>
+                <h3 className="text-sm text-gray-500">Miscellaneous Account</h3>
+                <p className="text-2xl font-bold">$0</p>
+              </div>
+              <FaExchangeAlt className="text-gray-400" />
+            </div>
+
+            {/* October Savings Card */}
+            <div className="bg-gray-100 p-4 rounded-lg shadow-sm flex justify-between items-center">
+              <div>
+                <h3 className="text-sm text-gray-500">October Savings</h3>
+                <p className="text-2xl font-bold">$622</p>
+              </div>
+              <FaExternalLinkAlt className="text-gray-400" />
+            </div>
           </div>
         </div>
       </div>
     );
-  } else {
-    return null;
-  }
-}
+  } else null;
+};
+
+export default MonthlyOverview;

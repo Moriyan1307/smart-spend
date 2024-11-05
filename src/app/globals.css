@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --theme-color: #121212;
+  --text-color: #ffffff; /* Optional: Define a text color for contrast */
+  --element-bg-color: #303030;
+}

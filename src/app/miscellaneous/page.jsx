@@ -2,13 +2,13 @@
 
 import React, { useState } from "react";
 import EventGrid from "../../components/Events/Events";
-import EventDetails from "../../components/EventDetails/EventDetails"
+import EventDetails from "../../components/EventDetails/EventDetails";
 
 const Events = () => {
   return (
-   <div>
-   <EventGrid/>
-   </div>
+    <div>
+      <EventGrid />
+    </div>
   );
 };
 

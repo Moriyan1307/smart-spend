@@ -5,9 +5,6 @@ const BudgetCalculator = () => {
   const [currency, setCurrency] = useState("USD");
   const [monthlyIncome, setMonthlyIncome] = useState(1200);
   const [ratio, setRatio] = useState("50-30-20");
-  const [needsRatio, setNeedsRatio] = useState(50);
-  const [wantsRatio, setWantsRatio] = useState(30);
-  const [investmentsRatio, setInvestmentsRatio] = useState(20);
   const [needs, setNeeds] = useState(600);
   const [wants, setWants] = useState(360);
   const [investments, setInvestments] = useState(240);
@@ -16,23 +13,11 @@ const BudgetCalculator = () => {
   const handleRatioChange = (newRatio) => {
     setRatio(newRatio);
     if (newRatio === "50-30-20") {
-      // Reset to standard ratio
-      setNeedsRatio(50);
-      setWantsRatio(30);
-      setInvestmentsRatio(20);
-      updateBudget(50, 30, 20);
+      // Standard ratio calculation
+      setNeeds(monthlyIncome * 0.5);
+      setWants(monthlyIncome * 0.3);
+      setInvestments(monthlyIncome * 0.2);
     }
-  };
-
-  // Update budget based on ratios
-  const updateBudget = (
-    needsPercentage,
-    wantsPercentage,
-    investmentsPercentage
-  ) => {
-    setNeeds((monthlyIncome * needsPercentage) / 100);
-    setWants((monthlyIncome * wantsPercentage) / 100);
-    setInvestments((monthlyIncome * investmentsPercentage) / 100);
   };
 
   // Handle custom input change
@@ -40,27 +25,16 @@ const BudgetCalculator = () => {
     const value = parseFloat(e.target.value);
     setMonthlyIncome(value);
 
-    // Update values based on current ratios
-    updateBudget(needsRatio, wantsRatio, investmentsRatio);
-  };
-
-  // Handle custom ratio input
-  const handleCustomRatioChange = (type, value) => {
-    const percentage = parseInt(value);
-    if (type === "needs") setNeedsRatio(percentage);
-    if (type === "wants") setWantsRatio(percentage);
-    if (type === "investments") setInvestmentsRatio(percentage);
-
-    // Update budget dynamically
-    updateBudget(
-      type === "needs" ? percentage : needsRatio,
-      type === "wants" ? percentage : wantsRatio,
-      type === "investments" ? percentage : investmentsRatio
-    );
+    // Update values if using standard ratio
+    if (ratio === "50-30-20") {
+      setNeeds(value * 0.5);
+      setWants(value * 0.3);
+      setInvestments(value * 0.2);
+    }
   };
 
   return (
-    <div className="bg-white text-gray-800 rounded-lg p-6 shadow-md mt-6 w-full mx-auto">
+    <div className="bg-white text-gray-800 rounded-lg p-6 shadow-md mt-6 max-w-lg mx-auto">
       <h2 className="text-xl font-semibold mb-4">
         Tailor Your Monthly Budget and Expense Ratio
       </h2>
@@ -118,53 +92,6 @@ const BudgetCalculator = () => {
           </label>
         </div>
       </div>
-
-      {/* Custom Ratio Inputs */}
-      {ratio === "Custom" && (
-        <div className="mb-4 bg-gray-100 p-4 rounded">
-          <div className="flex items-center space-x-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Need ratio
-              </label>
-              <input
-                type="number"
-                className="bg-gray-100 border border-gray-300 rounded w-full px-3 py-2"
-                value={needsRatio}
-                onChange={(e) =>
-                  handleCustomRatioChange("needs", e.target.value)
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Want ratio
-              </label>
-              <input
-                type="number"
-                className="bg-gray-100 border border-gray-300 rounded w-full px-3 py-2"
-                value={wantsRatio}
-                onChange={(e) =>
-                  handleCustomRatioChange("wants", e.target.value)
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Investment ratio
-              </label>
-              <input
-                type="number"
-                className="bg-gray-100 border border-gray-300 rounded w-full px-3 py-2"
-                value={investmentsRatio}
-                onChange={(e) =>
-                  handleCustomRatioChange("investments", e.target.value)
-                }
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Budget Breakdown */}
       <div className="mb-4 bg-gray-100 p-4 rounded">
