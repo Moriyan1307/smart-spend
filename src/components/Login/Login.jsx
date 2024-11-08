@@ -50,8 +50,8 @@ export default function LoginForm() {
       }
     });
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    // // Cleanup subscription on unmount
+    // return () => unsubscribe();
   }, [dispatch, router]);
 
   // New function to handle login
