@@ -1,12 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
-import { auth, db } from "../../../firebase";
+import { auth } from "../../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { addTransaction, fetchTransactions } from "../../utils/firebaseUtils";
+import {
+  addTransaction,
+  onSnapshotTransactions,
+} from "../../utils/firebaseUtils";
 import { useSelector } from "react-redux";
 
 export default function Dashboard() {
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [amount, setAmount] = useState("");
@@ -14,30 +17,39 @@ export default function Dashboard() {
   const [date, setDate] = useState("");
   const [category, setCategory] = useState("Needs");
 
-  const state = useSelector((state) => state.auth);
-  const month = state.user.month;
+  const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
+  const getCurrentMonth = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  };
+
+  const month = getCurrentMonth();
 
   useEffect(() => {
-    // Monitor auth state and set the user
     onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
   }, []);
 
   useEffect(() => {
-    const loadTransactions = async () => {
-      if (!user || !month) return; // Ensure user and month are set
+    if (!isLoggedIn || !user) return;
 
-      try {
-        const fetchedTransactions = await fetchTransactions(user.uid, month);
-        setTransactions(fetchedTransactions);
-      } catch (error) {
-        console.error("Error loading transactions:", error);
+    const unsubscribeTransactions = onSnapshotTransactions(
+      user.uid,
+      month,
+      (fetchedTransactions) => {
+        setTransactions(
+          Array.isArray(fetchedTransactions) ? fetchedTransactions : []
+        );
       }
-    };
+    );
 
-    loadTransactions();
-  }, [user, month]); // Re-run when user or month changes
+    return () => {
+      unsubscribeTransactions();
+    };
+  }, [user, isLoggedIn, month]);
 
   const handleAddTransaction = async () => {
     const transaction = {
@@ -49,47 +61,89 @@ export default function Dashboard() {
 
     try {
       await addTransaction(user.uid, month, transaction);
+      setShowModal(false);
       alert("Transaction added successfully!");
     } catch (error) {
-      alert("Failed to add transaction. Please try again.");
+      alert(error);
     }
   };
 
   return (
-    <div className="p-2 overflow-y-auto scrollbar-none h-full bg-gray-900 text-white">
-      <div className="bg-gray-800 rounded-lg p-6 shadow-md mt-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Transactions</h2>
-          <div className="flex space-x-2">
-            <button
-              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-              onClick={() => setShowModal(true)}
-            >
-              Add Entry
-            </button>
+    <div className="p-2 overflow-y h-full text-white">
+      <div className="p-2 overflow-y-auto scrollbar-none h-full text-white">
+        <div
+          className="rounded-lg p-6 shadow-md mt-6"
+          style={{
+            backgroundColor: "var(--gray-900)",
+            borderRadius: "10px",
+          }}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Transactions</h2>
+            <div className="flex space-x-2">
+              <button
+                className="px-4 py-2 rounded hover:bg-green-600"
+                style={{
+                  backgroundColor: "var(--gray-700)",
+                  color: "var(--text-color)",
+                }}
+                onClick={() => setShowModal(true)}
+              >
+                Add Entry
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-gray-800 rounded-lg shadow-sm text-white">
-            <thead>
-              <tr className="text-left bg-gray-700">
-                <th className="py-3 px-4">Date</th>
-                <th className="py-3 px-4">Description</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((transaction, ind) => (
-                <tr key={ind} className="border-b border-gray-600">
-                  <td className="py-3 px-4">{transaction.date}</td>
-                  <td className="py-3 px-4">{transaction.description}</td>
-                  <td className="py-3 px-4">{transaction.category}</td>
-                  <td className="py-3 px-4">{transaction.amount}</td>
+          <div className="overflow-x-auto">
+            <table
+              className="min-w-full"
+              style={{
+                backgroundColor: "var(--gray-800)",
+                color: "var(--text-color)",
+                borderRadius: "10px",
+              }}
+            >
+              <thead>
+                <tr
+                  style={{
+                    backgroundColor: "var(--gray-700)",
+                    borderRadius: "20px",
+                  }}
+                >
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Description</th>
+                  <th className="py-3 px-4">Category</th>
+                  <th className="py-3 px-4">Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.length > 0 ? (
+                  transactions.map((transaction, ind) => (
+                    <tr
+                      key={ind}
+                      style={{
+                        backgroundColor: "var(--gray-800)",
+                        marginBottom: "8px",
+                        borderRadius: "10px",
+                        borderBottom: "1px solid var(--gray-600)",
+                      }}
+                      className="shadow-md"
+                    >
+                      <td className="py-3 px-4">{transaction.date}</td>
+                      <td className="py-3 px-4">{transaction.description}</td>
+                      <td className="py-3 px-4">{transaction.category}</td>
+                      <td className="py-3 px-4">{transaction.amount}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="text-center py-4">
+                      No transactions available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

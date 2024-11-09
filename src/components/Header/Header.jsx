@@ -6,6 +6,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { setSignOut } from "../../app/redux/slices/authSlice";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { auth } from "../../../firebase";
 
 export default function Header() {
   const [user, setUser] = useState([]);
@@ -23,9 +25,14 @@ export default function Header() {
 
   const dispatch = useDispatch();
 
-  const handleLogout = () => {
-    dispatch(setSignOut());
-    router.push("/");
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      dispatch(setSignOut());
+      router.push("/");
+    } catch (error) {
+      console.error("Error during sign-out", error);
+    }
   };
 
   return (
