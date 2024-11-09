@@ -2,10 +2,10 @@
 
 import LandingPage from "../components/Landing Page/LandingPage";
 
-import Image from "next/image";
 import { useSelector } from "react-redux";
-import Dashboard from "./dashboard/page";
+
 import { useAuthListener } from "../components/AuthListner/useAuthListener";
+import DashboardPage from "./dashboard/page";
 
 export default function Home() {
   useAuthListener();
@@ -13,7 +13,7 @@ export default function Home() {
   const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
 
   if (isLoggedIn) {
-    return <Dashboard />;
+    return <DashboardPage />;
   } else {
     return <LandingPage />;
   }

@@ -258,44 +258,121 @@ export const fetchAccountBalances = async (userId) => {
   }
 };
 
-// Function to update a specific transaction in Firestore
 export const updateTransaction = async (
   userId,
   month,
-  transactionId,
+  transactionIndex,
   updatedTransaction
 ) => {
   const monthDocRef = doc(db, "users", userId, "months", month);
 
   try {
-    const transactionRef = `${transactionId}`;
+    // Fetch the current month document and transaction array
+    const monthDoc = await getDoc(monthDocRef);
+    if (!monthDoc.exists()) {
+      throw new Error("Month document does not exist");
+    }
+
+    const monthData = monthDoc.data();
+    const transactions = monthData.transactions || [];
+    const remainingBudget = monthData.calculatedBudget || {
+      needs: 0,
+      wants: 0,
+      investments: 0,
+    };
+
+    // Ensure the transaction index is valid
+    if (transactionIndex < 0 || transactionIndex >= transactions.length) {
+      throw new Error("Invalid transaction index");
+    }
+
+    // Retrieve the original transaction
+    const originalTransaction = transactions[transactionIndex];
+    const category = originalTransaction.category.toLowerCase();
+
+    // Calculate the difference between the original and updated transaction amounts
+    const amountDifference =
+      updatedTransaction.amount - originalTransaction.amount;
+
+    // Update the budget based on the difference
+    const updatedBudget = { ...remainingBudget };
+
+    if (updatedBudget[category] !== undefined) {
+      updatedBudget[category] -= amountDifference;
+
+      // Check if the update causes the budget to go negative
+      if (updatedBudget[category] < 0) {
+        throw new Error(
+          `Insufficient funds in ${originalTransaction.category}. Available funds are ${remainingBudget[category]}`
+        );
+      }
+    } else {
+      throw new Error(`Invalid category: ${originalTransaction.category}`);
+    }
+
+    // Update the transaction in the array
+    const updatedTransactions = [...transactions];
+    updatedTransactions[transactionIndex] = {
+      ...originalTransaction,
+      ...updatedTransaction,
+    };
+
+    // Write the updated transactions and budget back to Firestore
     await updateDoc(monthDocRef, {
-      [`transactions.${transactionRef}`]: updatedTransaction,
+      transactions: updatedTransactions,
+      calculatedBudget: updatedBudget,
     });
-    console.log("Transaction updated successfully");
+
+    console.log("Transaction and budget updated successfully");
   } catch (error) {
     console.error("Error updating transaction:", error);
     throw error;
   }
 };
 
-// Function to delete a specific transaction in Firestore
-export const deleteTransaction = async (userId, month, transactionId) => {
+// Function to delete a transaction by index in Firestore
+export const deleteTransaction = async (userId, month, index) => {
   const monthDocRef = doc(db, "users", userId, "months", month);
 
   try {
-    const transactionRef = `${transactionId}`;
-    await updateDoc(monthDocRef, {
-      [`transactions.${transactionRef}`]: deleteField(),
-    });
-    console.log("Transaction deleted successfully");
+    // Fetch the current month document
+    const monthDoc = await getDoc(monthDocRef);
+    if (monthDoc.exists()) {
+      const monthData = monthDoc.data();
+      const transactions = monthData.transactions || [];
+
+      console.log(index);
+
+      console.log(transactions);
+
+      console.log("Original Transactions:", transactions);
+
+      // Check if the index is within the bounds of the array
+      if (index < 0 || index >= transactions.length) {
+        console.warn(`Invalid index ${index}. No transaction deleted.`);
+        return;
+      }
+
+      // Use splice to remove the transaction at the specified index
+      transactions.splice(index, 1);
+
+      console.log("Updated Transactions (after delete):", transactions);
+
+      // Write the updated transactions array back to Firestore
+      await updateDoc(monthDocRef, {
+        transactions: transactions,
+      });
+
+      console.log("Transaction deleted successfully");
+    } else {
+      throw new Error("Month document not found");
+    }
   } catch (error) {
     console.error("Error deleting transaction:", error);
     throw error;
   }
 };
 
-// Function to calculate the remaining days in the current month
 export const calculateDaysLeftInMonth = () => {
   const today = new Date();
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last date of the current month

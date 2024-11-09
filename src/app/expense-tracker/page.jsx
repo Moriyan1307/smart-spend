@@ -1,84 +1,110 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import AccountOverview from "../../components/AccountOverview/AccountOverview";
-import React from "react";
+import Dashboard from "../../components/Dashboard/Dashboard";
+import ExpenseInsights from "../../components/Insight/ExpenseInsights";
+import TransactionChart from "../../components/TransactionChart/TransactionChart";
+import { useSelector } from "react-redux";
+import { onSnapshotTransactions } from "../../utils/firebaseUtils";
+
+const sampleTransactions = [
+  {
+    date: "2024-11-01",
+    category: "Needs",
+    amount: 200,
+    description: "Groceries",
+  },
+  {
+    date: "2024-11-02",
+    category: "Wants",
+    amount: 150,
+    description: "Dining Out",
+  },
+  {
+    date: "2024-11-03",
+    category: "Investments",
+    amount: 100,
+    description: "Stocks",
+  },
+];
 
 const ProfilePage = () => {
+  // State to control the view toggle
+  const [view, setView] = useState("insights");
+
+  const [transactions, setTransactions] = useState([]);
+  const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
+  const user = useSelector((state) => state.auth.user);
+  const month = user.month;
+
+  useEffect(() => {
+    if (!isLoggedIn || !user) return;
+
+    // Call the `onSnapshotTransactions` function with the user ID, month, and a callback
+    const unsubscribe = onSnapshotTransactions(
+      user.uid,
+      month,
+      setTransactions
+    );
+
+    // Cleanup function to unsubscribe from real-time updates when the component unmounts
+    return () => {
+      unsubscribe();
+    };
+  }, [user, isLoggedIn, month]);
+
   return (
-    <div className="p-2 overflow-y-auto scrollbar-none h-full ">
-      <div className="bg-white text-gray-800 rounded-lg p-6 shadow-md mt-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">October Entries</h2>
-          <div className="flex space-x-2">
-            <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-              Export
-            </button>
-            <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-gray-900">
-              Add Entry
-            </button>
+    <div className="flex flex-col w-full">
+      {/* Full-width Toggle Section */}
+      <div className="flex justify-center w-full py-4  mb-6 shadow-md rounded-lg">
+        <button
+          onClick={() => setView("insights")}
+          className={`px-6 py-3 font-semibold w-5/12 rounded-l-lg transition-colors ${
+            view === "insights"
+              ? "bg-green-600 text-white"
+              : "bg-gray-700 text-gray-300"
+          }`}
+          style={{
+            backgroundColor:
+              view === "insights" ? "var(--gray-700)" : "var(--gray-800)",
+            color:
+              view === "insights" ? "var(--text-color)" : "var(--gray-200)",
+          }}
+        >
+          Insights
+        </button>
+        <button
+          onClick={() => setView("graph")}
+          className={`px-6 py-3 font-semibold rounded-r-lg w-5/12 transition-colors ${
+            view === "graph"
+              ? "bg-green-600 text-white"
+              : "bg-gray-700 text-gray-300"
+          }`}
+          style={{
+            backgroundColor:
+              view === "graph" ? "var(--gray-700)" : "var(--gray-800)",
+            color: view === "graph" ? "var(--text-color)" : "var(--gray-200)",
+          }}
+        >
+          Graph
+        </button>
+      </div>
+
+      {view === "insights" ? (
+        <div className="flex space-x-4 p-4 ">
+          {/* Main Dashboard Section */}
+          <div className="w-2/3">
+            <Dashboard />
+          </div>
+          {/* Insights Section */}
+          <div className="w-1/3 ">
+            <ExpenseInsights />
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-gray-100 rounded-lg shadow-sm">
-            <thead>
-              <tr className="text-left bg-gray-200">
-                <th className="py-3 px-4">Date & Time</th>
-                <th className="py-3 px-4">Details</th>
-                <th className="py-3 px-4">Needs</th>
-                <th className="py-3 px-4">Wants</th>
-                <th className="py-3 px-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Sample Row 1 */}
-              <tr className="border-b border-gray-300">
-                <td className="py-3 px-4">16 Oct · 7:00 PM</td>
-                <td className="py-3 px-4">IFL</td>
-                <td className="py-3 px-4">$18</td>
-                <td className="py-3 px-4 text-gray-500">N/A</td>
-                <td className="py-3 px-4 space-x-2">
-                  <button className="text-blue-500 hover:underline">
-                    Edit
-                  </button>
-                  <button className="text-red-500 hover:underline">
-                    Delete
-                  </button>
-                </td>
-              </tr>
-              {/* Sample Row 2 */}
-              <tr className="border-b border-gray-300">
-                <td className="py-3 px-4">16 Oct · 7:00 PM</td>
-                <td className="py-3 px-4">Rent</td>
-                <td className="py-3 px-4">$360</td>
-                <td className="py-3 px-4 text-gray-500">N/A</td>
-                <td className="py-3 px-4 space-x-2">
-                  <button className="text-blue-500 hover:underline">
-                    Edit
-                  </button>
-                  <button className="text-red-500 hover:underline">
-                    Delete
-                  </button>
-                </td>
-              </tr>
-              {/* Sample Row 3 */}
-              <tr>
-                <td className="py-3 px-4">16 Oct · 7:00 PM</td>
-                <td className="py-3 px-4">Groceries</td>
-                <td className="py-3 px-4">$200</td>
-                <td className="py-3 px-4 text-gray-500">N/A</td>
-                <td className="py-3 px-4 space-x-2">
-                  <button className="text-blue-500 hover:underline">
-                    Edit
-                  </button>
-                  <button className="text-red-500 hover:underline">
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      ) : (
+        <TransactionChart transactions={transactions} />
+      )}
     </div>
   );
 };
