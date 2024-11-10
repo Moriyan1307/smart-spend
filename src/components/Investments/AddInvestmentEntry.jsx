@@ -1,10 +1,22 @@
 import React, { useState } from "react";
-import { addTransactionToAccount } from "../../utils/firebaseUtils";
+import {
+  addInvestmentTransaction,
+  addTransactionToAccount,
+} from "../../utils/firebaseUtils";
 
 const AddInvestmentEntry = ({ closeModal, userId }) => {
   const [investmentName, setInvestmentName] = useState("");
   const [date, setDate] = useState("");
   const [amount, setAmount] = useState("");
+
+  const getCurrentMonth = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  };
+
+  const month = getCurrentMonth();
 
   const handleAddTransaction = async () => {
     if (!investmentName || !amount) return alert("All fields are required!");
@@ -15,12 +27,10 @@ const AddInvestmentEntry = ({ closeModal, userId }) => {
       amount: parseFloat(amount),
     };
 
+    console.log(newTransaction);
+
     try {
-      await addTransactionToAccount(
-        userId,
-        "investmentsAccount",
-        newTransaction
-      );
+      await addInvestmentTransaction(userId, month, newTransaction);
       closeModal(); // Close modal after adding transaction
       alert("Investment added successfully!");
     } catch (error) {

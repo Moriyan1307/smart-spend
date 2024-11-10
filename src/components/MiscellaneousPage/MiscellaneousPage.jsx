@@ -2,35 +2,45 @@
 
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { onSnapshotAccountTransactions } from "../../utils/firebaseUtils"; // Make sure this utility listens to investmentsAccount
-import AddInvestmentEntry from "./AddInvestmentEntry";
+import {
+  onSnapshotMiscellaneousTransactions,
+  addMiscellaneousTransaction,
+} from "../../utils/firebaseUtils";
+import AddMiscellaneousEntry from "./AddMiscellaneousEntry"; // Component for adding a new entry
 
-const InvestmentPage = () => {
+const MiscellaneousPage = () => {
   const [showModal, setShowModal] = useState(false);
-  const [investmentTransactions, setInvestmentTransactions] = useState([]);
-  const [investmentBalance, setInvestmentBalance] = useState(0);
+  const [miscTransactions, setMiscTransactions] = useState([]);
+  const [miscBalance, setMiscBalance] = useState(0);
   const user = useSelector((state) => state.auth.user);
   const currency = useSelector((state) => state.currency.currency);
 
-  // Fetch investment transactions in real-time
   useEffect(() => {
     if (user) {
-      const unsubscribe = onSnapshotAccountTransactions(
+      const unsubscribe = onSnapshotMiscellaneousTransactions(
         user.uid,
-        "investmentsAccount",
-        (transactions) => {
-          setInvestmentTransactions(transactions || 0);
-          calculateTotals(transactions || []);
+        (accountData) => {
+          if (accountData) {
+            setMiscBalance(accountData.balance || 0);
+            setMiscTransactions(accountData.transactions || []);
+          } else {
+            setMiscBalance(0);
+            setMiscTransactions([]);
+          }
         }
       );
       return () => unsubscribe();
     }
   }, [user]);
 
-  // Calculate balance and total amount invested
-  const calculateTotals = (transactions) => {
-    const totalBalance = transactions.reduce((acc, txn) => acc + txn.amount, 0);
-    setInvestmentBalance(totalBalance);
+  const handleAddTransaction = async (transaction) => {
+    try {
+      await addMiscellaneousTransaction(user.uid, transaction);
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error adding transaction:", error);
+      alert("Failed to add transaction. Please try again.");
+    }
   };
 
   return (
@@ -42,9 +52,9 @@ const InvestmentPage = () => {
         <div className="text-center">
           <p className="text-3xl font-semibold">
             {currency}
-            {investmentBalance.toFixed(2)}
+            {miscBalance.toFixed(2)}
           </p>
-          <p className="text-gray-400">Investments Balance</p>
+          <p className="text-gray-400">Miscellaneous Balance</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -53,15 +63,13 @@ const InvestmentPage = () => {
           Add Entry
         </button>
         <div className="text-center">
-          <p className="text-3xl font-semibold">
-            {investmentTransactions.length}
-          </p>
-          <p className="text-gray-400">Total Investments</p>
+          <p className="text-3xl font-semibold">{miscTransactions.length}</p>
+          <p className="text-gray-400">Total Miscellaneous Transactions</p>
         </div>
       </div>
       <div className="border-t border-gray-700 mt-4">
-        {investmentTransactions.length ? (
-          investmentTransactions.map((txn, index) => (
+        {miscTransactions.length ? (
+          miscTransactions.map((txn, index) => (
             <div
               key={index}
               className="flex justify-between items-center p-4 border-b border-gray-700"
@@ -81,13 +89,13 @@ const InvestmentPage = () => {
         )}
       </div>
       {showModal && (
-        <AddInvestmentEntry
+        <AddMiscellaneousEntry
           closeModal={() => setShowModal(false)}
-          userId={user.uid} // Pass the userId to AddInvestmentEntry for adding transactions
+          onSave={handleAddTransaction}
         />
       )}
     </div>
   );
 };
 
-export default InvestmentPage;
+export default MiscellaneousPage;

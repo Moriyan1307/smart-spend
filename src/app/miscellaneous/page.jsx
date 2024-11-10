@@ -1,15 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import EventGrid from "../../components/Events/Events";
-import EventDetails from "../../components/EventDetails/EventDetails";
+import MiscellaneousPage from "../../components/MiscellaneousPage/MiscellaneousPage";
 
 const Events = () => {
-  return (
-    <div>
-      <EventGrid />
-    </div>
-  );
+  return <MiscellaneousPage />;
 };
 
 export default Events;

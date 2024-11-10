@@ -80,35 +80,6 @@ export default function FinancialSetup() {
     calculateBudget(parseFloat(income) || 0);
   };
 
-  // const handleSave = async () => {
-  //   const financialSetupData = {
-  //     income: parseFloat(income),
-  //     currency: selectedCurrency,
-  //     ratioType: ratio,
-  //     budgetRatios: {
-  //       needs: needsRatio,
-  //       wants: wantsRatio,
-  //       investments: investmentsRatio,
-  //     },
-  //     calculatedBudget: {
-  //       needs,
-  //       wants,
-  //       investments,
-  //     },
-  //   };
-
-  //   console.log(user);
-
-  //   try {
-  //     await saveFinancialSetup(user.uid, month, financialSetupData);
-  //     alert("Financial setup saved successfully!");
-  //     router.push("/dashboard");
-  //   } catch (error) {
-  //     console.log(error);
-  //     alert("Failed to save financial setup. Please try again.");
-  //   }
-  // };
-
   const handleSave = async () => {
     const financialSetupData = {
       income: parseFloat(income),

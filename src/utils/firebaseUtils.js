@@ -41,11 +41,6 @@ export const saveFinancialSetup = async (userId, month, financialSetupData) => {
   const userDocRef = doc(db, "users", userId); // Reference for the user document
   const monthDocRef = doc(db, "users", userId, "months", month); // Reference for the specific month document
 
-  const defaultAccounts = {
-    balance: 0,
-    transactions: [], // Initialize with an empty array
-  };
-
   try {
     // Store global financial setup data in the user document
     await setDoc(
@@ -54,9 +49,6 @@ export const saveFinancialSetup = async (userId, month, financialSetupData) => {
         income: financialSetupData.income,
         currency: financialSetupData.currency,
         budgetRatios: financialSetupData.budgetRatios,
-        investmentsAccount: defaultAccounts, // Initialize investments account
-        miscellaneousAccount: defaultAccounts,
-        savingsAccount: defaultAccounts,
       },
       { merge: true } // Use merge to update existing data without overwriting
     );
@@ -444,6 +436,196 @@ export const addTransactionToAccount = async (
   }
 };
 
+export const onSnapshotMiscellaneousTransactions = (userId, callback) => {
+  if (!userId) {
+    throw new Error("Invalid userId parameter");
+  }
+
+  const userDocRef = doc(db, "users", userId);
+
+  return onSnapshot(
+    userDocRef,
+    (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const miscAccountData = data.miscellaneousAccount || {
+          balance: 0,
+          transactions: [],
+        };
+        callback(miscAccountData);
+      } else {
+        console.log("No data found for the specified user.");
+        callback({ balance: 0, transactions: [] }); // Default if no data found
+      }
+    },
+    (error) => {
+      console.error(
+        "Error fetching real-time miscellaneous transactions:",
+        error
+      );
+    }
+  );
+};
+
+export const addMiscellaneousTransaction = async (userId, transaction) => {
+  if (!userId || !transaction) {
+    throw new Error("Invalid parameters");
+  }
+
+  const userDocRef = doc(db, "users", userId);
+
+  try {
+    // Fetch the current miscellaneous account data
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const miscAccount = userData.miscellaneousAccount || {
+        balance: 0,
+        transactions: [],
+      };
+
+      // Update balance and add transaction
+      const updatedBalance = miscAccount.balance + transaction.amount;
+      const updatedTransactions = arrayUnion(transaction);
+
+      await updateDoc(userDocRef, {
+        "miscellaneousAccount.balance": updatedBalance,
+        "miscellaneousAccount.transactions": updatedTransactions,
+      });
+
+      console.log("Miscellaneous transaction added successfully");
+    } else {
+      throw new Error("User document not found");
+    }
+  } catch (error) {
+    console.error("Error adding miscellaneous transaction:", error);
+    throw error;
+  }
+};
+
+export const getTotalMiscellaneousAmount = async (userId) => {
+  if (!userId) {
+    throw new Error("Invalid userId parameter.");
+  }
+
+  try {
+    const userDocRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const miscAccount = userDoc.data().miscellaneousAccount;
+
+      if (miscAccount && miscAccount.transactions) {
+        // Sum up all transaction amounts in the miscellaneous account
+        const totalAmount = miscAccount.transactions.reduce(
+          (sum, txn) => sum + txn.amount,
+          0
+        );
+        return totalAmount;
+      } else {
+        console.log("No transactions found in miscellaneous account.");
+        return 0;
+      }
+    } else {
+      throw new Error("User document not found.");
+    }
+  } catch (error) {
+    console.error("Error fetching total miscellaneous amount:", error);
+    throw error;
+  }
+};
+
+export const getTotalInvestmentAmount = async (userId) => {
+  if (!userId) {
+    throw new Error("Invalid userId parameter.");
+  }
+
+  try {
+    const userDocRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const investmentAccount = userDoc.data().investmentAccount;
+
+      if (investmentAccount && investmentAccount.transactions) {
+        // Sum up all transaction amounts in the investment account
+        const totalAmount = investmentAccount.transactions.reduce(
+          (sum, txn) => sum + txn.amount,
+          0
+        );
+        return totalAmount;
+      } else {
+        console.log("No transactions found in investment account.");
+        return 0;
+      }
+    } else {
+      throw new Error("User document not found.");
+    }
+  } catch (error) {
+    console.error("Error fetching total investment amount:", error);
+    throw error;
+  }
+};
+
+export const addInvestmentTransaction = async (userId, month, transaction) => {
+  if (!userId || !month || !transaction || !transaction.amount) {
+    throw new Error("Invalid parameters for adding investment transaction.");
+  }
+
+  const monthDocRef = doc(db, "users", userId, "months", month);
+  const userDocRef = doc(db, "users", userId);
+
+  try {
+    // Fetch the current month document to get the budget data
+    const monthDoc = await getDoc(monthDocRef);
+    if (!monthDoc.exists()) {
+      throw new Error("Month document does not exist.");
+    }
+
+    const monthData = monthDoc.data();
+    const currentBudget = monthData.calculatedBudget || { investments: 0 };
+
+    // Fetch the user document to get the investment account data
+    const userDoc = await getDoc(userDocRef);
+    if (!userDoc.exists()) {
+      throw new Error("User document does not exist.");
+    }
+
+    const userData = userDoc.data();
+    const currentInvestmentAccount = userData.investmentAccount || {
+      balance: 0,
+      transactions: [],
+    };
+
+    // Update the calculated budget by deducting the transaction amount from investments
+    const updatedBudget = {
+      ...currentBudget,
+      investments: currentBudget.investments - transaction.amount,
+    };
+
+    // Perform both updates in Firestore
+    await updateDoc(monthDocRef, {
+      calculatedBudget: updatedBudget,
+    });
+
+    try {
+      await updateDoc(userDocRef, {
+        ["investmentsAccount.transactions"]: arrayUnion(transaction),
+      });
+      console.log("Transaction added successfully.");
+    } catch (error) {
+      console.error("Error adding transaction:", error);
+      throw error;
+    }
+
+    console.log(
+      "Investment transaction added and budget updated successfully."
+    );
+  } catch (error) {
+    console.error("Error adding investment transaction:", error);
+    throw error;
+  }
+};
 export const calculateDaysLeftInMonth = () => {
   const today = new Date();
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last date of the current month
