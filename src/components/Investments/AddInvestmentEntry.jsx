@@ -27,8 +27,6 @@ const AddInvestmentEntry = ({ closeModal, userId }) => {
       amount: parseFloat(amount),
     };
 
-    console.log(newTransaction);
-
     try {
       await addInvestmentTransaction(userId, month, newTransaction);
       closeModal(); // Close modal after adding transaction

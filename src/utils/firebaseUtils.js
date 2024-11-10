@@ -636,3 +636,56 @@ export const calculateDaysLeftInMonth = () => {
 
   return daysLeft;
 };
+
+export const fetchSavingsAccount = async (userId) => {
+  if (!userId) {
+    throw new Error("Invalid userId for fetching savings account.");
+  }
+
+  const userDocRef = doc(db, "users", userId);
+
+  try {
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return userData.savingsAccount || [];
+    } else {
+      console.log("User document does not exist.");
+      return { balance: 0, transactions: [] };
+    }
+  } catch (error) {
+    console.error("Error fetching savings account:", error);
+    throw error;
+  }
+};
+
+export const addSavingsTransaction = async (userId, month, amount) => {
+  if (!userId || !month || amount === undefined) {
+    throw new Error("Invalid parameters for adding savings transaction.");
+  }
+
+  const userDocRef = doc(db, "users", userId);
+
+  try {
+    // Fetch the current savings account data
+    const userDoc = await getDoc(userDocRef);
+    const userData = userDoc.exists() ? userDoc.data() : {};
+    const savingsAccount = userData.savingsAccount || [];
+
+    // Add the new transaction to the savingsAccount array
+    savingsAccount.push({
+      month,
+      amount,
+    });
+
+    // Write the updated savings account back to Firestore
+    await updateDoc(userDocRef, {
+      savingsAccount: savingsAccount,
+    });
+
+    console.log("Savings transaction added successfully.");
+  } catch (error) {
+    console.error("Error adding savings transaction:", error);
+    throw error;
+  }
+};
