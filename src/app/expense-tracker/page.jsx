@@ -36,7 +36,7 @@ const ProfilePage = () => {
   const [transactions, setTransactions] = useState([]);
   const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
   const user = useSelector((state) => state.auth.user);
-  const month = user.month;
+  const month = useSelector((state) => state.auth.user.month);
 
   useEffect(() => {
     if (!isLoggedIn || !user) return;
@@ -57,7 +57,7 @@ const ProfilePage = () => {
   return (
     <div className="flex flex-col w-full">
       {/* Full-width Toggle Section */}
-      <div className="flex justify-center w-full py-4  mb-6 shadow-md rounded-lg">
+      <div className="flex justify-center w-full py-4   rounded-lg">
         <button
           onClick={() => setView("insights")}
           className={`px-6 py-3 font-semibold w-5/12 rounded-l-lg transition-colors ${
@@ -93,11 +93,10 @@ const ProfilePage = () => {
 
       {view === "insights" ? (
         <div className="flex space-x-4 p-4 ">
-          {/* Main Dashboard Section */}
           <div className="w-2/3">
             <Dashboard />
           </div>
-          {/* Insights Section */}
+
           <div className="w-1/3 ">
             <ExpenseInsights />
           </div>

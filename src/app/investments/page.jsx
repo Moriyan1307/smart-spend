@@ -1,12 +1,12 @@
 "use client";
 
-import Jobs from "../../components/Jobs/Job";
 import React from "react";
+import InvestmentPage from "../../components/Investments/InvestmentPage";
 
 const JobsPage = () => {
   return (
     <div className="h-full">
-      <Jobs />
+      <InvestmentPage />
     </div>
   );
 };

@@ -13,28 +13,7 @@ import {
 import { db } from "../../firebase"; // Adjust the import path if necessary
 
 // Function to save onboarding financial setup data to Firestore
-export const saveFinancialSetup = async (userId, month, financialSetupData) => {
-  if (!userId) {
-    throw new Error("User not signed in");
-  }
-
-  if (!month) {
-    throw new Error("Month is not specified");
-  }
-
-  const monthDocRef = doc(db, "users", userId, "months", month); // Path to the month's document
-
-  try {
-    await setDoc(monthDocRef, financialSetupData, { merge: true });
-    console.log("Financial setup saved successfully for", month);
-  } catch (error) {
-    console.error("Error saving financial setup:", error);
-    throw error;
-  }
-};
-
-// Function to add a transaction to the specified month
-// export const addTransaction = async (userId, month, transaction) => {
+// export const saveFinancialSetup = async (userId, month, financialSetupData) => {
 //   if (!userId) {
 //     throw new Error("User not signed in");
 //   }
@@ -43,23 +22,64 @@ export const saveFinancialSetup = async (userId, month, financialSetupData) => {
 //     throw new Error("Month is not specified");
 //   }
 
-//   const monthDocRef = doc(db, "users", userId, "months", month);
-
-//   const transactionWithTimestamp = {
-//     ...transaction,
-//     // timestamp: serverTimestamp(), // Add a timestamp to the transaction
-//   };
+//   const monthDocRef = doc(db, "users", userId, "months", month); // Path to the month's document
 
 //   try {
-//     await updateDoc(monthDocRef, {
-//       transactions: arrayUnion(transactionWithTimestamp),
-//     });
-//     console.log("Transaction added successfully for", month);
+//     await setDoc(monthDocRef, financialSetupData, { merge: true });
+//     console.log("Financial setup saved successfully for", month);
 //   } catch (error) {
-//     console.error("Error adding transaction:", error);
+//     console.error("Error saving financial setup:", error);
 //     throw error;
 //   }
 // };
+
+export const saveFinancialSetup = async (userId, month, financialSetupData) => {
+  if (!userId || !month || !financialSetupData) {
+    throw new Error("Invalid parameters for saving financial setup.");
+  }
+
+  const userDocRef = doc(db, "users", userId); // Reference for the user document
+  const monthDocRef = doc(db, "users", userId, "months", month); // Reference for the specific month document
+
+  const defaultAccounts = {
+    balance: 0,
+    transactions: [], // Initialize with an empty array
+  };
+
+  try {
+    // Store global financial setup data in the user document
+    await setDoc(
+      userDocRef,
+      {
+        income: financialSetupData.income,
+        currency: financialSetupData.currency,
+        budgetRatios: financialSetupData.budgetRatios,
+        investmentsAccount: defaultAccounts, // Initialize investments account
+        miscellaneousAccount: defaultAccounts,
+        savingsAccount: defaultAccounts,
+      },
+      { merge: true } // Use merge to update existing data without overwriting
+    );
+
+    // Store month-specific financial setup data in the month document
+    await setDoc(
+      monthDocRef,
+      {
+        income: financialSetupData.income,
+        currency: financialSetupData.currency,
+        ratioType: financialSetupData.ratioType,
+        budgetRatios: financialSetupData.budgetRatios,
+        calculatedBudget: financialSetupData.calculatedBudget,
+      },
+      { merge: true }
+    );
+
+    console.log("Financial setup saved successfully!");
+  } catch (error) {
+    console.error("Error saving financial setup:", error);
+    throw error;
+  }
+};
 
 export const addTransaction = async (userId, month, transaction) => {
   if (!userId || !month || !transaction) {
@@ -369,6 +389,57 @@ export const deleteTransaction = async (userId, month, index) => {
     }
   } catch (error) {
     console.error("Error deleting transaction:", error);
+    throw error;
+  }
+};
+
+export const onSnapshotAccountTransactions = (
+  userId,
+  accountType,
+  callback
+) => {
+  if (!userId || !accountType) {
+    throw new Error("Invalid parameters for fetching real-time transactions.");
+  }
+
+  const userDocRef = doc(db, "users", userId);
+
+  return onSnapshot(
+    userDocRef,
+    (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const transactions = data[accountType]?.transactions || [];
+        callback(transactions); // Pass the transactions data to the callback
+      } else {
+        console.log("No data found for the specified account.");
+        callback([]); // Pass empty array if no transactions found
+      }
+    },
+    (error) => {
+      console.error("Error fetching real-time transactions:", error);
+    }
+  );
+};
+
+export const addTransactionToAccount = async (
+  userId,
+  accountType,
+  transaction
+) => {
+  if (!userId || !accountType || !transaction) {
+    throw new Error("Invalid parameters for adding a transaction.");
+  }
+
+  const userDocRef = doc(db, "users", userId);
+
+  try {
+    await updateDoc(userDocRef, {
+      [`${accountType}.transactions`]: arrayUnion(transaction),
+    });
+    console.log("Transaction added successfully.");
+  } catch (error) {
+    console.error("Error adding transaction:", error);
     throw error;
   }
 };

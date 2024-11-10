@@ -142,7 +142,7 @@ export default function Dashboard() {
     <div className="p-2 overflow-y h-full text-white">
       <div className="p-2 overflow-y-auto scrollbar-none h-full text-white">
         <div
-          className="rounded-lg p-6 shadow-md mt-6"
+          className="rounded-lg p-6 shadow-md "
           style={{
             backgroundColor: "var(--gray-900)",
             borderRadius: "10px",
