@@ -4,12 +4,8 @@ import { useSelector } from "react-redux";
 import {
   calculateDaysLeftInMonth,
   fetchAccountBalances,
-  fetchInvestmentBalance,
-  fetchMiscellaneousBalance,
-  fetchMonthlyOverview,
-  fetchSavingsBalance,
+  fetchMiscAndInvestmentBalances,
   onSnapshotMonthlyOverview,
-  onSnapshotTransactions,
 } from "../../utils/firebaseUtils";
 
 const MonthlyOverview = () => {
@@ -23,7 +19,14 @@ const MonthlyOverview = () => {
   const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
   const user = useSelector((state) => state.auth.user);
   const currency = useSelector((state) => state.currency.currency);
-  const month = "2024-11";
+  const getCurrentMonth = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  };
+
+  const month = getCurrentMonth();
 
   const [spentNeeds, setSpentNeeds] = useState(0);
   const [spentWants, setSpentWants] = useState(0);
@@ -61,26 +64,26 @@ const MonthlyOverview = () => {
       setOverviewData
     );
 
-    return () => {
-      unsubscribeOverview();
-    };
+    return () => unsubscribeOverview();
   }, [isLoggedIn, user, month]);
 
   useEffect(() => {
     const loadBalances = async () => {
-      if (!user) return;
-
-      try {
-        const accountBalances = await fetchAccountBalances(user.uid);
-
-        setBalances(accountBalances);
-      } catch (error) {
-        console.error("Error fetching account balances:", error);
+      if (user) {
+        try {
+          const { miscellaneousBalance, investmentBalance } =
+            await fetchMiscAndInvestmentBalances(user.uid);
+          setBalances({ miscellaneousBalance, investmentBalance });
+        } catch (error) {
+          console.error("Error loading balances:", error);
+        }
       }
     };
 
     loadBalances();
   }, [user]);
+
+  console.log(balances);
 
   if (!isLoggedIn) {
     return null;
@@ -91,10 +94,12 @@ const MonthlyOverview = () => {
   }
 
   const daysLeft = calculateDaysLeftInMonth();
-
-  // Extract data
   const { calculatedBudget } = overviewData;
-  const { budgetRatios, income } = overviewData;
+  const totalSavings =
+    (calculatedBudget?.needs || 0) +
+    (calculatedBudget?.wants || 0) +
+    (calculatedBudget?.investments || 0);
+
   return (
     <div className="text-white rounded-lg p-6 shadow-md w-4/12">
       <h2 className="text-lg font-semibold mb-4">Monthly Overview</h2>
@@ -118,7 +123,9 @@ const MonthlyOverview = () => {
           </span>
           <span>
             {currency}
-            {calculatedBudget?.needs > 0 ? calculatedBudget.needs : 0}
+            {calculatedBudget?.needs > 0
+              ? calculatedBudget.needs.toFixed(2)
+              : 0}
           </span>
         </div>
         <div
@@ -132,7 +139,9 @@ const MonthlyOverview = () => {
           </span>
           <span>
             {currency}
-            {calculatedBudget?.wants > 0 ? calculatedBudget.wants : 0}
+            {calculatedBudget?.wants > 0
+              ? calculatedBudget.wants.toFixed(2)
+              : 0}
           </span>
         </div>
         <div
@@ -147,15 +156,13 @@ const MonthlyOverview = () => {
           <span>
             {currency}
             {calculatedBudget?.investments > 0
-              ? calculatedBudget.investments
+              ? calculatedBudget.investments.toFixed(2)
               : 0}
           </span>
         </div>
         <div className="mt-4 font-semibold text-green-500">
           Total Savings: {currency}
-          {calculatedBudget?.needs +
-            calculatedBudget?.wants +
-            calculatedBudget?.investments || 0}
+          {totalSavings.toFixed(2)}
         </div>
       </div>
 
@@ -177,7 +184,7 @@ const MonthlyOverview = () => {
               <h3 className="text-sm text-gray-400">Savings Account</h3>
               <p className="text-2xl font-bold">
                 {currency}
-                {balances.savingsBalance}
+                0.00
               </p>
             </div>
             <FaExchangeAlt className="text-gray-400" />
@@ -192,7 +199,7 @@ const MonthlyOverview = () => {
               <h3 className="text-sm text-gray-400">Investments Account</h3>
               <p className="text-2xl font-bold">
                 {currency}
-                {balances.investmentBalance}
+                {spentInvestments > 0 ? spentInvestments.toFixed(2) : 0}
               </p>
             </div>
             <FaExchangeAlt className="text-gray-400" />
@@ -207,7 +214,7 @@ const MonthlyOverview = () => {
               <h3 className="text-sm text-gray-400">Miscellaneous Account</h3>
               <p className="text-2xl font-bold">
                 {currency}
-                {balances.miscellaneousBalance}
+                {balances.miscellaneousBalance.toFixed(2)}
               </p>
             </div>
             <FaExchangeAlt className="text-gray-400" />
@@ -219,12 +226,10 @@ const MonthlyOverview = () => {
             style={{ backgroundColor: "var(--gray-800)" }}
           >
             <div>
-              <h3 className="text-sm text-gray-400">October Savings</h3>
+              <h3 className="text-sm text-gray-400">{month} Savings</h3>
               <p className="text-2xl font-bold">
                 {currency}
-                {calculatedBudget?.needs +
-                  calculatedBudget?.wants +
-                  calculatedBudget?.investments || 0}
+                {totalSavings.toFixed(2)}
               </p>
             </div>
             <FaExternalLinkAlt className="text-gray-400" />

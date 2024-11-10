@@ -24,7 +24,7 @@ const paths = [
   },
   { title: "Dues", path: "/dues", icon: ScheduleIcon },
   { title: "Overview", path: "/overview", icon: ZoomInIcon },
-  { title: "Settings", path: "/settings", icon: SettingsIcon },
+  // { title: "Settings", path: "/settings", icon: SettingsIcon },
   { title: "Contact Us", path: "/contact", icon: CallIcon },
 ];
 
@@ -55,7 +55,7 @@ export default function Sidebar() {
             </span>
           </div>
 
-          <div className="flex flex-col w-full space-y-4">
+          <div className="flex flex-col w-full h-4/5  space-y-4">
             {paths.map((item) => {
               const IconComponent = item.icon;
               const isActive = pathname === item.path;
@@ -67,7 +67,7 @@ export default function Sidebar() {
               return shouldRender ? (
                 <Link href={item.path} key={item.title} passHref>
                   <div
-                    className={`flex items-center p-2 h-10 w-full ${
+                    className={`flex items-center p-2 h-10 w-full  ${
                       isActive
                         ? "bg-gray-300 text-white rounded-lg"
                         : "text-white"

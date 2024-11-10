@@ -197,6 +197,30 @@ export const onSnapshotTransactions = (userId, month, callback) => {
   );
 };
 
+export const onSnapshotBudget = (userId, month, callback) => {
+  if (!userId || !month) {
+    throw new Error("Invalid parameters for fetching real-time transactions.");
+  }
+
+  const monthDocRef = doc(db, "users", userId, "months", month);
+
+  return onSnapshot(
+    monthDocRef,
+    (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        callback(data.calculatedBudget || []); // Pass transactions data to callback
+      } else {
+        console.log("No data found for the specified month.");
+        callback([]); // Pass empty array if no transactions found
+      }
+    },
+    (error) => {
+      console.error("Error fetching real-time transactions:", error);
+    }
+  );
+};
+
 // Real-time function to fetch monthly overview with onSnapshot
 export const onSnapshotMonthlyOverview = (userId, month, callback) => {
   if (!userId || !month) {
@@ -686,6 +710,74 @@ export const addSavingsTransaction = async (userId, month, amount) => {
     console.log("Savings transaction added successfully.");
   } catch (error) {
     console.error("Error adding savings transaction:", error);
+    throw error;
+  }
+};
+
+export const fetchDuesData = async (userId, type) => {
+  const userDocRef = doc(db, "users", userId);
+  const userDoc = await getDoc(userDocRef);
+  if (userDoc.exists()) {
+    const data = userDoc.data();
+    return data.dues?.[type] || { balance: 0, transactions: [] };
+  }
+  return { balance: 0, transactions: [] };
+};
+
+// Add a due transaction to payable or receivable
+export const addDueTransaction = async (userId, type, transaction) => {
+  const userDocRef = doc(db, "users", userId);
+
+  // Fetch current dues data
+  const userDoc = await getDoc(userDocRef);
+  const userData = userDoc.exists() ? userDoc.data() : {};
+  const dues = userData.dues || {
+    payable: { balance: 0, transactions: [] },
+    receivable: { balance: 0, transactions: [] },
+  };
+
+  // Update balance and transactions
+  const updatedBalance = dues[type].balance + transaction.amount;
+  const updatedTransactions = [
+    ...dues[type].transactions,
+    { ...transaction, status: type === "payable" ? "unpaid" : "not_received" },
+  ];
+
+  // Write updated dues data back to Firestore
+  await updateDoc(userDocRef, {
+    [`dues.${type}.balance`]: updatedBalance,
+    [`dues.${type}.transactions`]: updatedTransactions,
+  });
+};
+
+export const fetchMiscAndInvestmentBalances = async (userId) => {
+  if (!userId) {
+    throw new Error("User ID is required to fetch account balances.");
+  }
+
+  const userDocRef = doc(db, "users", userId);
+
+  try {
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const miscellaneousBalance = userData.miscellaneousAccount?.balance || 0;
+      const investmentBalance = userData.investmentsAccount?.balance || 0;
+
+      return {
+        miscellaneousBalance,
+        investmentBalance,
+      };
+    } else {
+      console.log("User document does not exist.");
+      return {
+        miscellaneousBalance: 0,
+        investmentBalance: 0,
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching balances:", error);
     throw error;
   }
 };

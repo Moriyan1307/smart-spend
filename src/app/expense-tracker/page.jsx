@@ -93,13 +93,13 @@ const ProfilePage = () => {
 
       {view === "insights" ? (
         <div className="flex space-x-4 p-4 ">
-          <div className="w-2/3">
+          <div className="w-full">
             <Dashboard />
           </div>
 
-          <div className="w-1/3 ">
+          {/* <div className="w-1/3 ">
             <ExpenseInsights />
-          </div>
+          </div> */}
         </div>
       ) : (
         <TransactionChart transactions={transactions} />
