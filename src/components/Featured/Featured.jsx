@@ -5,6 +5,7 @@ import {
   calculateDaysLeftInMonth,
   fetchAccountBalances,
   fetchMiscAndInvestmentBalances,
+  onSnapshotMiscellaneousTransactions,
   onSnapshotMonthlyOverview,
 } from "../../utils/firebaseUtils";
 
@@ -19,6 +20,7 @@ const MonthlyOverview = () => {
   const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
   const user = useSelector((state) => state.auth.user);
   const currency = useSelector((state) => state.currency.currency);
+
   const getCurrentMonth = () => {
     const date = new Date();
     const year = date.getFullYear();
@@ -31,6 +33,7 @@ const MonthlyOverview = () => {
   const [spentNeeds, setSpentNeeds] = useState(0);
   const [spentWants, setSpentWants] = useState(0);
   const [spentInvestments, setSpentInvestments] = useState(0);
+  const [miscBalance, setMiscBalance] = useState(0);
 
   useEffect(() => {
     if (
@@ -81,6 +84,22 @@ const MonthlyOverview = () => {
     };
 
     loadBalances();
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = onSnapshotMiscellaneousTransactions(
+        user.uid,
+        (accountData) => {
+          if (accountData) {
+            setMiscBalance(accountData.balance || 0);
+          } else {
+            setMiscBalance(0);
+          }
+        }
+      );
+      return () => unsubscribe();
+    }
   }, [user]);
 
   console.log(balances);
@@ -214,7 +233,8 @@ const MonthlyOverview = () => {
               <h3 className="text-sm text-gray-400">Miscellaneous Account</h3>
               <p className="text-2xl font-bold">
                 {currency}
-                {balances.miscellaneousBalance.toFixed(2)}
+
+                {miscBalance.toFixed(2)}
               </p>
             </div>
             <FaExchangeAlt className="text-gray-400" />

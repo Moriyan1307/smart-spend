@@ -47,15 +47,7 @@ export default function Header() {
         {/* Search Bar */}
 
         {isLoggedIn ? (
-          <input
-            type="text"
-            placeholder="Search..."
-            className="px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-            style={{
-              backgroundColor: "var(--element-bg-color)",
-              color: "var(--text-color)",
-            }}
-          />
+          <div />
         ) : (
           <div>
             <span

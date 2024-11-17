@@ -32,8 +32,21 @@ export default function LandingPage() {
           style={{ color: "var(--text-color)" }}
         >
           <li>
-            💰 <strong>Recurring Expenses Management</strong>: Keep track of
-            monthly bills with ease to maintain a predictable budget.
+            📊 <strong>Budget Allocation Ratios</strong>: Use custom ratios for
+            budgeting needs, wants, and investments.
+          </li>
+
+          <li>
+            💾 <strong>Export Financial Data</strong>: Download your financial
+            data in .xlsx format for external use.
+          </li>
+          <li>
+            📊 <strong>Dynamic Financial Visualization</strong>: View
+            interactive charts and graphs for a clearer financial overview.
+          </li>
+          <li>
+            🔒 <strong>Secure Data and Privacy Protection</strong>: Your data is
+            safe with advanced encryption and privacy controls.
           </li>
 
           <li>
@@ -45,21 +58,8 @@ export default function LandingPage() {
             multiple currencies effortlessly.
           </li>
           <li>
-            📊 <strong>Budget Allocation Ratios</strong>: Use custom ratios for
-            budgeting needs, wants, and investments.
-          </li>
-          <li>
-            💾 <strong>Export Financial Data</strong>: Download your financial
-            data in .xlsx format for external use.
-          </li>
-
-          <li>
-            📊 <strong>Dynamic Financial Visualization</strong>: View
-            interactive charts and graphs for a clearer financial overview.
-          </li>
-          <li>
-            🔒 <strong>Secure Data and Privacy Protection</strong>: Your data is
-            safe with advanced encryption and privacy controls.
+            💰 <strong>Recurring Expenses Management</strong>: Keep track of
+            monthly bills with ease to maintain a predictable budget.
           </li>
         </ul>
       </div>
