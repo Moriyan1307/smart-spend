@@ -87,18 +87,18 @@ const MonthlyOverview = () => {
   }, [user]);
 
   useEffect(() => {
-    if (user) {
+    if (user?.uid) {
       const unsubscribe = onSnapshotMiscellaneousTransactions(
         user.uid,
         (accountData) => {
-          if (accountData) {
-            setMiscBalance(accountData.balance || 0);
-          } else {
-            setMiscBalance(0);
-          }
+          setMiscBalance(accountData?.balance || 0);
         }
       );
+
       return () => unsubscribe();
+    } else {
+      console.warn("User not logged in or user ID is missing.");
+      setMiscBalance(0); // Set balance to 0 if user is not available
     }
   }, [user]);
 

@@ -24,44 +24,20 @@ export default function LoginForm() {
   const auth = getAuth();
   const provider = new GoogleAuthProvider();
 
-  const getCurrentMonth = () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    return `${year}-${month}`;
-  };
-
-  const month = getCurrentMonth();
+  const month = new Date().toISOString().slice(0, 7); // Current month in YYYY-MM format
 
   const checkFirstTimeLogin = async (user) => {
     try {
-      // Get user metadata
       const metadata = user.metadata;
-
-      // Check if creation time equals last sign in time
-      const isFirstLogin = metadata.creationTime === metadata.lastSignInTime;
-
-      // Alternative method using timestamp comparison
-      const timeDifference = Math.abs(
-        new Date(metadata.creationTime).getTime() -
-          new Date(metadata.lastSignInTime).getTime()
-      );
-
-      // Consider it first login if time difference is less than 1 minute
-      const isFirstLoginByTime = timeDifference < 60000;
-
-      // You can also check if this is the first sign in since account creation
-      const signInCount = user.metadata.signInCount; // Only available in some Firebase plans
-
-      return {
-        isFirstLogin,
-        isFirstLoginByTime,
-        signInCount,
-        creationTime: metadata.creationTime,
-        lastSignInTime: metadata.lastSignInTime,
-      };
+      const isFirstLogin =
+        metadata.creationTime === metadata.lastSignInTime ||
+        Math.abs(
+          new Date(metadata.creationTime).getTime() -
+            new Date(metadata.lastSignInTime).getTime()
+        ) < 60000;
+      return isFirstLogin;
     } catch (error) {
-      console.error("Error checking first time login:", error);
+      console.error("Error checking first-time login:", error);
       throw error;
     }
   };
@@ -77,23 +53,17 @@ export default function LoginForm() {
               displayName: user.displayName,
               email: user.email,
               photoURL: user.photoURL,
-              month: month,
+              month,
             })
           );
 
-          // Fetch currency data
           const currency = await fetchCurrencyFromFirebase(user.uid, month);
           dispatch(setCurrency(currency));
 
-          const loginInfo = await checkFirstTimeLogin(user);
-
-          if (loginInfo.isFirstLogin) {
-            router.push("/onboard");
-          } else {
-            router.push("/dashboard");
-          }
+          const isFirstLogin = await checkFirstTimeLogin(user);
+          router.push(isFirstLogin ? "/onboard" : "/dashboard");
         } catch (error) {
-          console.error("Error processing user login:", error);
+          console.error("Error processing login:", error);
           setError("Failed to process login. Please try again.");
         }
       } else {
@@ -106,16 +76,13 @@ export default function LoginForm() {
     return () => unsubscribe();
   }, [dispatch, router, auth, month]);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
       const result = await signInWithPopup(auth, provider);
-      const idToken = await result.user.getIdToken();
-      // Store token securely if needed
-      console.log("Login successful");
+      console.log("Login successful:", result.user);
     } catch (error) {
       console.error("Error during sign-in:", error);
       setError(
@@ -145,32 +112,33 @@ export default function LoginForm() {
 
   return (
     <div
-      className="max-w-lg mx-auto p-8   rounded-md shadow-md"
-      style={{
-        backgroundColor: "var(--gray-800)",
-        borderRadius: "10px",
-      }}
+      className="max-w-md mx-auto mt-16 p-6 shadow-lg rounded-lg text-center"
+      style={{ backgroundColor: "var(--gray-900)" }}
     >
-      <h2 className="text-2xl text-white font-bold mb-6 text-center">
-        {user ? "Loading" : "Login"}
+      <h2 className="text-3xl font-semibold text-white mb-4">
+        {user ? "Welcome Back!" : "Sign In"}
       </h2>
-      <form className="space-y-4" onSubmit={handleLogin}>
-        {!user && (
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? "Loading..." : "Login with Google"}
-          </button>
-        )}
+      <p className="text-gray-400 mb-6">
+        {user
+          ? "Redirecting you to your dashboard..."
+          : "Sign in with Google to continue."}
+      </p>
 
-        {error && (
-          <p className="text-red-500 text-center mt-2" role="alert">
-            {error}
-          </p>
-        )}
-      </form>
+      {!user && (
+        <button
+          onClick={handleLogin}
+          disabled={isLoading}
+          className={`w-full py-3 px-5 rounded-md text-white font-semibold bg-green-600 hover:bg-green-700 transition duration-300 ${
+            isLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          {isLoading ? "Signing in..." : "Sign in with Google"}
+        </button>
+      )}
+
+      {error && (
+        <div className="mt-4 bg-red-600 text-white p-3 rounded-md">{error}</div>
+      )}
     </div>
   );
 }

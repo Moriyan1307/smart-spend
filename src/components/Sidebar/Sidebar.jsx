@@ -11,6 +11,7 @@ import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import CallIcon from "@mui/icons-material/Call";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 
 const paths = [
   { title: "Dashboard", path: "/dashboard", icon: HomeIcon },
@@ -24,7 +25,7 @@ const paths = [
   },
   { title: "Dues", path: "/dues", icon: ScheduleIcon },
   { title: "Overview", path: "/overview", icon: ZoomInIcon },
-  // { title: "Settings", path: "/settings", icon: SettingsIcon },
+  { title: "Recurring", path: "/recurring", icon: EventRepeatIcon },
   { title: "Contact Us", path: "/contact", icon: CallIcon },
 ];
 

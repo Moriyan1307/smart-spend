@@ -781,3 +781,44 @@ export const fetchMiscAndInvestmentBalances = async (userId) => {
     throw error;
   }
 };
+
+export const addRecurringExpense = async (userId, expense) => {
+  if (!userId || !expense) {
+    throw new Error("Invalid parameters for adding a recurring expense.");
+  }
+
+  const userDocRef = doc(db, "users", userId);
+
+  try {
+    // Add recurring expense to the user's recurringExpenses array
+    await updateDoc(userDocRef, {
+      recurringExpenses: arrayUnion(expense),
+    });
+    console.log("Recurring expense added successfully.");
+  } catch (error) {
+    console.error("Error adding recurring expense:", error);
+    throw error;
+  }
+};
+
+export const fetchRecurringExpenses = async (userId) => {
+  if (!userId) {
+    throw new Error("Invalid userId for fetching recurring expenses.");
+  }
+
+  const userDocRef = doc(db, "users", userId);
+
+  try {
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return userData.recurringExpenses || [];
+    } else {
+      console.log("User document does not exist.");
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching recurring expenses:", error);
+    throw error;
+  }
+};
